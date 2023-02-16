@@ -5,7 +5,8 @@ dotenv.config();
 class SendLog {
 	/**
 	 * Enum of type's log
-	 * @type {{INFO: string, SUCCESS: string, ERROR: string, WARNING: string}}
+	 * @typedef {T[keyof T]} valueOf<T>
+	 * @template T
 	 */
 	static level = {
 		INFO: "ℹ Info ℹ",
@@ -17,7 +18,7 @@ class SendLog {
 	/**
 	 *
 	 * @param {Discord.Client} client
-	 * @param {level.any} type
+	 * @param {valueOf<level>} type
 	 * @param {string} message
 	 * @param {string} title
 	 */
@@ -31,14 +32,17 @@ class SendLog {
 		// Message to send
 		const logToSend = `**${type}  ${title ? title : ""}** : \n${message}`
 
+		// Send to the console
+		console.log(`${title} : ${message}`)
+
 		// Send to the channel
 		// await client.channels.cache.get("1030413242209677363").send(logToSend)
 
-		// Send to the developer
-		await client.users.cache.find(user => user.id === process.env.DEVELOPER_ID)
-			.createDM()
-			.then(DMChannel => DMChannel.send(logToSend))
-			.catch(err => {console.log(err.message)})
+		// // Send to the developer
+		// await client.users.cache.find(user => user.id === process.env.DEVELOPER_ID)
+		// 	.createDM()
+		// 	.then(DMChannel => DMChannel.send(logToSend))
+		// 	.catch(err => {console.log(err.message)})
 	}
 }
 
