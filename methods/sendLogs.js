@@ -36,7 +36,7 @@ class SendLog {
 		console.log(`${title} : ${message}`)
 
 		// Send to the channel
-		// await client.channels.cache.get("1030413242209677363").send(logToSend)
+		await client.channels.cache.get("1071693304179216467").send(logToSend)
 
 		// // Send to the developer
 		// await client.users.cache.find(user => user.id === process.env.DEVELOPER_ID)
