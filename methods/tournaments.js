@@ -4,12 +4,9 @@ const fetch = require('node-fetch');
 const { Client, EmbedBuilder  } = require("discord.js")
 const log = require("./sendLogs.js")
 const generate_image = require("./puppeteer")
-
-
-// const LYS_Logo = new Discord.MessageAttachment('./assets/LYS_Logo.jpg')
-// const TSS_league_512 = new Discord.MessageAttachment('./assets/TSS_league_512.png')
-// const screenshot = new Discord.MessageAttachment('./assets/screenshot.png')
-
+const db = require('./db')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
 class Tournament {
 
@@ -72,12 +69,12 @@ class Tournament {
 		this.#cookie = "cf_clearance=71c80538d429eb26de7dbf2b6114c7cd59734670-1620679609-0-150;"
 
 		await this.#getTournamentEveryDay()
-		// await this.#getNewTournaments();
+		// await this.#sendEmbedMessageForAllGuild()
 	}
 
 	static async #getTournamentEveryDay() {
 		const noon = new Date();
-		noon.setHours(20, 44, 0, 0); // Set the time to noon
+		noon.setHours(13, 0, 0, 0); // Set the time to noon
 		let timeUntilNoon = noon.getTime() - Date.now(); // Calculate time until noon
 
 		// If it's already past noon, add 1 day to the time until noon
@@ -124,7 +121,6 @@ class Tournament {
 					.catch(err => log.sendLog(this.#client, log.level.ERROR, `Error when requesting detail for tournament ${tournament.tournamentID} :\n${err.message}`, "Request Details Tournaments"))
 
 		if (this.#tempTournaments.length > 0) {
-			// console.log(`${this.#tempTournaments.length} new tournament(s) get`)
 			await log.sendLog(this.#client, log.level.SUCCESS, `${this.#tempTournaments.length} new tournament(s) get`, "New Tournaments")
 			// Log the date of each tournament
 			for (let tournament of this.#tempTournaments) {
@@ -132,24 +128,13 @@ class Tournament {
 				console.log(tournament.gameMode + ", " + date + ", " + tournament.nameEN)
 			}
 			// Send tournament to the test sever
-			await this.#sendEmbedMessage(this.#tempTournaments, '1071693303671701611', '1071693303671701612', '1071693303671701613')
+			// await this.#sendEmbedMessage(this.#tempTournaments, '1071693303671701611', '1071693303671701612', '1071693303671701613')
+			await this.#sendEmbedMessageForAllGuilds(this.#tempTournaments);
 		}
 		else {
 			console.log("No new tournament, no call of the method to send embed message")
 			await log.sendLog(this.#client, log.level.WARNING, "No new tournament, no call of the method to send embed message", "New Tournaments")
 		}
-
-		// Send tournament in a discord channel
-		// if (this.#tempTournaments.length > 0) {
-		// 	console.log(`${this.#tempTournaments.length} new tournament(s) get`)
-		// 	await log.sendLog(this.#client, log.level.SUCCESS, `${this.#tempTournaments.length} new tournament(s) get`, "New Tournaments")
-		// 	await this.#sendEmbedMessage(this.#tempTournaments, config.CHANNEL_ID_ab_tournament_link, config.CHANNEL_ID_rb_tournament_link, config.CHANNEL_ID_sb_tournament_link)
-		// 	await this.#sendEmbedMessage(this.#tempTournaments, config.CHANNEL_ID_ESR_tournament_link, config.CHANNEL_ID_ESR_tournament_link, null)
-		// }
-		// else {
-		// 	console.log("No new tournament, no call of the method to send embed message")
-		// 	await log.sendLog(this.#client, log.level.WARNING, "No new tournament, no call of the method to send embed message", "New Tournaments")
-		// }
 	}
 
 	/**
@@ -196,6 +181,20 @@ class Tournament {
 			.then(response => response.json())
 			.then(result => tournament.details = result)
 			.catch(err => {console.log(err.message); throw err});
+	}
+
+	static async #sendEmbedMessageForAllGuilds(tournaments) {
+		const guildIds = this.#client.guilds.cache.map(g => g.id);
+		const tournamentSettings = await prisma.tournament_settings.findMany();
+		for(const item of tournamentSettings) {
+			if(guildIds.includes(item.guild_id.toString())) {
+				const abChannel = item.ab_channel;
+				const rbChannel = item.rb_channel;
+				const sbChannel = item.sb_channel;
+
+				await this.#sendEmbedMessage(tournaments, abChannel, rbChannel, sbChannel);
+			}
+		}
 	}
 
 	/**
@@ -325,10 +324,6 @@ class Tournament {
 			files: ['./assets/esportReadyLogo.png', './assets/tournamentVehicles.png'],
 			embeds: [embedMessage],
 		}
-	}
-
-	static #embedMessageOld(tournament) {
-
 	}
 
 	/**
