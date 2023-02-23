@@ -20,12 +20,12 @@ jobs:
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
       - name: Deploy using ssh
-        uses: ./ #appleboy/ssh-action@master
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          port: 22
+          port: ${{ secrets.HOST }}
           script: |
             cd ~/home/debian/Bots
             whoami
