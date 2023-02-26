@@ -24,13 +24,16 @@ jobs:
     steps:
       - name: Deploy using ssh
         uses: appleboy/ssh-action@v0.1.7
+        env: 
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
+          env: PROJECT_PATH
           script: |
-            cd /home/debian/Bots/BotCommands
+            cd $PROJECT_PATH
             git pull origin main
             git status
             pnpm install -P
