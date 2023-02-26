@@ -33,5 +33,5 @@ jobs:
             cd /home/debian/Bots/BotCommands
             git pull origin main
             git status
-            pnpm install --only=prod
+            pnpm install -P
             pm2 restart BotCommands
