@@ -30,8 +30,10 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            cd ~/home/debian/Bots
+            cd /home/debian/Bots
             whoami
+            cd /home
+            ls -la
             #git pull origin main
             #git status
             #npm install --only=prod
