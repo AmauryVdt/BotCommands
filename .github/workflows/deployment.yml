@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
-          env: PROJECT_PATH
+          envs: PROJECT_PATH
           script: |
             cd $PROJECT_PATH
             git pull origin main
