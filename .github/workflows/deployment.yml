@@ -1,5 +1,5 @@
 name: Deployment of the Application
-run-name: ${{ github.author }} start the deployment of the aplication 🚀
+run-name: ${{ github.actor }} start the deployment of the aplication 🚀
 on:
   push:
     branches: [ workflows ]
