@@ -37,11 +37,7 @@ jobs:
           envs: PROJECT_PATH
           script: |
             cd $PROJECT_PATH
-            node -v
-            npm -v
-            pnpm -v
-            pnpm install
+            git checkout main
+            git pull origin main
             pnpm install -P
-            #git pull origin main
-            #pnpm install -P
-            #pm2 restart BotCommands
+            pm2 restart BotCommands
