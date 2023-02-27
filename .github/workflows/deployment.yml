@@ -2,7 +2,7 @@ name: Deployment of the Application
 run-name: ${{ github.actor }} start the deployment of the aplication 🚀
 on:
   push:
-    branches: [ workflows ]
+    branches: [ push ]
 
 jobs:
   start:
