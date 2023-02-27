@@ -40,6 +40,8 @@ jobs:
             node -v
             npm -v
             pnpm -v
+            pnpm install
+            pnpm install -P
             #git pull origin main
             #pnpm install -P
             #pm2 restart BotCommands
