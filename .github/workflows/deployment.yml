@@ -2,7 +2,7 @@ name: Deployment of the Application
 run-name: ${{ github.author }} start the deployment of the aplication 🚀
 on:
   push:
-    branches: [ worflows ]
+    branches: [ main ]
 
 jobs:
   start:
@@ -35,6 +35,5 @@ jobs:
           script: |
             cd $PROJECT_PATH
             git pull origin main
-            git status
             pnpm install -P
             pm2 restart BotCommands
