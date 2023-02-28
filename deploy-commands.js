@@ -22,13 +22,30 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
 		// The put method is used to fully refresh all commands in the guild with the current set
+		// const data = await rest.put(
+		// 	Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID_TEST),
+		// 	{ body: commands },
+		// );
+
 		const data = await rest.put(
-			Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID_TEST),
+			Routes.applicationCommands(process.env.CLIENT_ID),
 			{ body: commands },
 		);
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-	} catch (error) {
+
+		// // DELETE Specific command
+		// // for guild-based commands
+		// rest.delete(Routes.applicationGuildCommand("clientId", "guildId", 'commandId'))
+		// 	.then(() => console.log('Successfully deleted guild command'))
+		// 	.catch(console.error);
+		//
+		// // for global commands
+		// rest.delete(Routes.applicationCommand("clientId", 'commandId'))
+		// 	.then(() => console.log('Successfully deleted application command'))
+		// 	.catch(console.error);
+	}
+	catch (error) {
 		// And of course, make sure you catch and log any errors!
 		console.error(error);
 	}
