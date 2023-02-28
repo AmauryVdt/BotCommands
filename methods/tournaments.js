@@ -128,7 +128,6 @@ class Tournament {
 				console.log(tournament.gameMode + ", " + date + ", " + tournament.nameEN)
 			}
 			// Send tournament to the test sever
-			// await this.#sendEmbedMessage(this.#tempTournaments, '1071693303671701611', '1071693303671701612', '1071693303671701613')
 			await this.#sendEmbedMessageForAllGuilds(this.#tempTournaments);
 		}
 		else {
@@ -221,8 +220,8 @@ class Tournament {
 			else if (channelHB !== null && tournament.gameMode === 'HB') {
 				channel = channelHB
 			}
-			else {
-				console.log("⚠ The game mode is not matching" + tournament.gameMode + ", " + new Date(tournament.dateStartTournament * 1000).toLocaleString("en-GB", {timeZone:"UTC"}) + ", " + tournament.nameEN)
+			else if (tournament.gameMode !== 'AB' || tournament.gameMode !== 'RB' || tournament.gameMode !== 'HB') {
+				console.log("⚠ The game mode is not matching" + tournament.gameMode + ": " + new Date(tournament.dateStartTournament * 1000).toLocaleString("en-GB", {timeZone:"UTC"}) + ", " + tournament.nameEN)
 			}
 
 			if (channel !== null) {
@@ -231,7 +230,7 @@ class Tournament {
 						this.#tournamentsIds.push(tournament.tournamentID);
 						sentTournaments.push(tournament.gameMode + ", " + new Date(tournament.dateStartTournament * 1000).toLocaleString("en-GB", {timeZone: "UTC"}) + ", " + tournament.nameEN)
 					})
-					.catch(err => log.sendLog(this.#client, log.level.ERROR, err.message, "Send Embed Message"))
+					.catch(err => log.sendLog(this.#client, log.level.ERROR, `Channel ID : ${channel}\n\nError Message : \n${err.message}`, "Send Embed Message In Specific Channel"))
 			}
 		}
 		await log.sendLog(this.#client, log.level.SUCCESS, sentTournaments.join("\n"), "Send Embed Message")
@@ -315,13 +314,13 @@ class Tournament {
 			timestamp: new Date(tournament.dateStartTournament * 1000),
 			footer: {
 				text: 'eSport Official Discord - Gaijin',
-				icon_url: 'attachment://esportReadyLogo.png',
+				icon_url: 'attachment://WT_Esports_Standard_B_1.png',
 			},
 		}
 		return {
 			// files: ['./assets/esportReadyLogo.png', './assets/tournamentVehicles.png'],
 			// embed: embedMessage
-			files: ['./assets/esportReadyLogo.png', './assets/tournamentVehicles.png'],
+			files: ['./assets/WT_Esports_Standard_B_1.png', './assets/tournamentVehicles.png'],
 			embeds: [embedMessage],
 		}
 	}

@@ -9,7 +9,7 @@ datasource db {
 
 model tournament_settings {
   id           String  @id(map: "tournament_settings_pk") @db.Uuid
-  guild_id     BigInt  @unique(map: "tournament_settings_pk2")
+  guild_id     String  @unique(map: "tournament_settings_pk2")
   sending_mode String?
   ab_channel   String?
   rb_channel   String?
