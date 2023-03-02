@@ -6,7 +6,7 @@ const log = require("./sendLogs.js")
 const generate_image = require("./puppeteer")
 const db = require('./db')
 const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
+let prisma = new PrismaClient()
 
 class Tournament {
 
@@ -24,6 +24,7 @@ class Tournament {
 
 	/**
 	 * Temp array of tournaments
+	 * @type []
 	 */
 	static #tempTournaments
 
@@ -74,7 +75,7 @@ class Tournament {
 
 	static async #getTournamentEveryDay() {
 		const noon = new Date();
-		noon.setHours(13, 0, 0, 0); // Set the time to noon
+		noon.setHours(23, 47, 0, 0); // Set the time to noon
 		let timeUntilNoon = noon.getTime() - Date.now(); // Calculate time until noon
 
 		// If it's already past noon, add 1 day to the time until noon
@@ -97,9 +98,12 @@ class Tournament {
 		await log.sendLog(this.#client, log.level.INFO, "Launch of the tournament engine", "New Tournaments")
 		await this.#requestTournaments().catch(err => { log.sendLog(this.#client, log.level.ERROR, "Request failed\n" + err.message, "Request Tournaments"); })
 
+		// Get old tournements
+		const oldTournaments = await prisma.tournaments.findMany();
+
 		// Delete passed tournaments
 		for( let i = 0; i < this.#tempTournaments.length; i++){
-			if (!(this.#tempTournaments[i].status === "1" && this.#tempTournaments[i].active === "0") || this.#tournamentsIds.includes(this.#tempTournaments[i].tournamentID) /*|| this.#tempTournaments[i].gameMode === "HB"*/) {
+			if (!(this.#tempTournaments[i].status === "1" && this.#tempTournaments[i].active === "0") || oldTournaments.some(ot => ot.id === this.#tempTournaments[i].tournamentID)) {
 				this.#tempTournaments.splice(i, 1);
 				i--;
 			}
@@ -128,7 +132,8 @@ class Tournament {
 				console.log(tournament.gameMode + ", " + date + ", " + tournament.nameEN)
 			}
 			// Send tournament to the test sever
-			await this.#sendEmbedMessageForAllGuilds(this.#tempTournaments);
+			// await this.#sendEmbedMessageForAllGuilds(this.#tempTournaments);
+			await this.#sendEmbedMessageForAllChannels(this.#tempTournaments);
 		}
 		else {
 			console.log("No new tournament, no call of the method to send embed message")
@@ -159,7 +164,7 @@ class Tournament {
 		await fetch("https://tss.warthunder.com/functions.php", requestOptions)
 			.then(response => response.json())
 			.then(result => this.#tempTournaments = result.data)
-			.catch(err => {console.log(err.message); throw err});
+			.catch(err => {console.error(err.message); throw err});
 	};
 
 	/**
@@ -179,7 +184,93 @@ class Tournament {
 		await fetch(`https://tss.warthunder.com/functions.php?id=${tournament.tournamentID}&action=DetailTournament`, requestOptions)
 			.then(response => response.json())
 			.then(result => tournament.details = result)
-			.catch(err => {console.log(err.message); throw err});
+			.catch(err => {console.error(err.message); throw err});
+	}
+
+	/**
+	 *
+	 * @param {this.tempTournaments} tournaments
+	 * @returns {Promise<void>}
+	 */
+	static #sendEmbedMessageForAllChannels = async (tournaments) => {
+		let channels = { AB: [], RB: [], HB: [] };
+		const guildIds = this.#client.guilds.cache.map(g => g.id);
+		const tournamentSettings = await prisma.tournament_settings.findMany()
+			// .then(async () => {
+			// 	await prisma.$disconnect();
+			// })
+			// .catch(async (e) => {
+			// 	console.error(e);
+			// 	await log.sendLog(this.#client, log.level.ERROR, e.message, "PRISMA : Find Many tournament settings")
+			// 	await prisma.$disconnect();
+			// });
+		tournamentSettings.forEach(ts => {
+			if (guildIds.includes(ts.guild_id)) {
+				channels.AB.push(ts.ab_channel)
+				channels.RB.push(ts.rb_channel)
+				channels.HB.push(ts.sb_channel)
+			}
+			else {
+				// TODO: Delete the value with Prisma
+			}
+		});
+
+		let sentTournaments = [];
+		// sentTournaments.push(tournament.gameMode + ", " + new Date(tournament.dateStartTournament * 1000).toLocaleString("en-GB", {timeZone: "UTC"}) + ", " + tournament.nameEN)
+		let numberOfTournamentChannels = { AB: { sent: 0, error: 0, null: 0}, RB: { sent: 0, error: 0, null: 0}, HB: { sent: 0, error: 0, null: 0} }
+
+		for (const tournament of tournaments) {
+			const embed = this.#embedMessage(tournament)
+			await generate_image(tournament.tournamentID).catch(err => log.sendLog(this.#client, log.level.ERROR, err.message, "Puppeteer, generate image by scraping"))
+
+			const gameMode = tournament.gameMode;
+
+			await Promise.all(this.#client.channels.cache
+				.filter(c => channels[gameMode].includes(c.id))
+				.map(c => c.send(embed)
+					.then(async _ => {
+						this.#tournamentsIds.push(tournament.tournamentID);
+						numberOfTournamentChannels[gameMode]['sent'] += 1;
+					})
+					.catch(err => {
+						numberOfTournamentChannels[gameMode]['error'] += 1;
+						log.sendLog(this.#client, log.level.ERROR, `Channel ID : ${channel}\n\nError Message : \n${err.message}`, "Send Embed Message In Specific Channel")
+					})
+				))
+
+			for (const channel of channels[gameMode]) {
+				if (channel !== null) {
+					await this.#client.channels.cache.get(channel).send(embed)
+						.then(async _ => {
+							this.#tournamentsIds.push(tournament.tournamentID);
+							numberOfTournamentChannels[gameMode]['sent'] += 1;
+						})
+						.catch(err => {
+							numberOfTournamentChannels[gameMode]['error'] += 1;
+							log.sendLog(this.#client, log.level.ERROR, `Channel ID : ${channel}\n\nError Message : \n${err.message}`, "Send Embed Message In Specific Channel")
+						})
+				}
+				else {
+					numberOfTournamentChannels[gameMode]['null'] += 1;
+				}
+			}
+			// Add the tournament in the database (to not resend it the next day)
+			await prisma.tournaments
+				.create({
+					data: {
+						id: parseInt(tournament.tournamentID),
+					}
+				})
+				.then(async () => {
+					await prisma.$disconnect();
+				})
+				.catch(async (e) => {
+					await log.sendLog(this.#client, log.level.ERROR, e.message, "PRISMA : Insert tournament ID")
+					await prisma.$disconnect();
+				});
+		}
+
+		await log.sendLog(this.#client, log.level.SUCCESS, numberOfTournamentChannels + guildIds.length + sentTournaments.join("\n"), "Send Embed Message")
 	}
 
 	static async #sendEmbedMessageForAllGuilds(tournaments) {
@@ -191,7 +282,7 @@ class Tournament {
 				const rbChannel = item.rb_channel;
 				const sbChannel = item.sb_channel;
 
-				await this.#sendEmbedMessage(tournaments, abChannel, rbChannel, sbChannel);
+				//await this.#sendEmbedMessage(tournaments, abChannel, rbChannel, sbChannel);
 			}
 		}
 	}
@@ -208,7 +299,7 @@ class Tournament {
 		let sentTournaments = []
 		for (let tournament of tournaments) {
 			const embed = this.#embedMessage(tournament)
-			await generate_image(tournament.tournamentID).catch(err => log.sendLog(this.#client, log.level.ERROR, err.message, "Puppeteer, generate image y scraping"))
+			await generate_image(tournament.tournamentID).catch(err => log.sendLog(this.#client, log.level.ERROR, err.message, "Puppeteer, generate image by scraping"))
 
 			let channel = null
 			if (channelAB !== null && tournament.gameMode === 'AB') {
