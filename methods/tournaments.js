@@ -75,7 +75,7 @@ class Tournament {
 
 	static async #getTournamentEveryDay() {
 		const noon = new Date();
-		noon.setHours(23, 47, 0, 0); // Set the time to noon
+		noon.setHours(0, 50, 0, 0); // Set the time to noon
 		let timeUntilNoon = noon.getTime() - Date.now(); // Calculate time until noon
 
 		// If it's already past noon, add 1 day to the time until noon
@@ -103,7 +103,7 @@ class Tournament {
 
 		// Delete passed tournaments
 		for( let i = 0; i < this.#tempTournaments.length; i++){
-			if (!(this.#tempTournaments[i].status === "1" && this.#tempTournaments[i].active === "0") || oldTournaments.some(ot => ot.id === this.#tempTournaments[i].tournamentID)) {
+			if (!(this.#tempTournaments[i].status === "1" && this.#tempTournaments[i].active === "0") || oldTournaments.some(ot => ot.id.toString() === (this.#tempTournaments[i].tournamentID).toString())) {
 				this.#tempTournaments.splice(i, 1);
 				i--;
 			}
@@ -125,14 +125,14 @@ class Tournament {
 					.catch(err => log.sendLog(this.#client, log.level.ERROR, `Error when requesting detail for tournament ${tournament.tournamentID} :\n${err.message}`, "Request Details Tournaments"))
 
 		if (this.#tempTournaments.length > 0) {
-			await log.sendLog(this.#client, log.level.SUCCESS, `${this.#tempTournaments.length} new tournament(s) get`, "New Tournaments")
+			let sentTournaments = [];
 			// Log the date of each tournament
 			for (let tournament of this.#tempTournaments) {
 				const date = new Date(tournament.dateStartTournament * 1000)
-				console.log(tournament.gameMode + ", " + date + ", " + tournament.nameEN)
+				sentTournaments.push(tournament.gameMode + ", " + date + ", " + tournament.nameEN)
 			}
+			await log.sendLog(this.#client, log.level.SUCCESS, `${this.#tempTournaments.length} new tournament(s) get\n${sentTournaments.join("\n")}`, "New Tournaments")
 			// Send tournament to the test sever
-			// await this.#sendEmbedMessageForAllGuilds(this.#tempTournaments);
 			await this.#sendEmbedMessageForAllChannels(this.#tempTournaments);
 		}
 		else {
@@ -196,14 +196,6 @@ class Tournament {
 		let channels = { AB: [], RB: [], HB: [] };
 		const guildIds = this.#client.guilds.cache.map(g => g.id);
 		const tournamentSettings = await prisma.tournament_settings.findMany()
-			// .then(async () => {
-			// 	await prisma.$disconnect();
-			// })
-			// .catch(async (e) => {
-			// 	console.error(e);
-			// 	await log.sendLog(this.#client, log.level.ERROR, e.message, "PRISMA : Find Many tournament settings")
-			// 	await prisma.$disconnect();
-			// });
 		tournamentSettings.forEach(ts => {
 			if (guildIds.includes(ts.guild_id)) {
 				channels.AB.push(ts.ab_channel)
@@ -215,8 +207,6 @@ class Tournament {
 			}
 		});
 
-		let sentTournaments = [];
-		// sentTournaments.push(tournament.gameMode + ", " + new Date(tournament.dateStartTournament * 1000).toLocaleString("en-GB", {timeZone: "UTC"}) + ", " + tournament.nameEN)
 		let numberOfTournamentChannels = { AB: { sent: 0, error: 0, null: 0}, RB: { sent: 0, error: 0, null: 0}, HB: { sent: 0, error: 0, null: 0} }
 
 		for (const tournament of tournaments) {
@@ -269,8 +259,8 @@ class Tournament {
 					await prisma.$disconnect();
 				});
 		}
-
-		await log.sendLog(this.#client, log.level.SUCCESS, numberOfTournamentChannels + guildIds.length + sentTournaments.join("\n"), "Send Embed Message")
+		const textToSendLog = `AB: ${numberOfTournamentChannels.AB.sent} sent, ${numberOfTournamentChannels.AB.error} error, ${numberOfTournamentChannels.AB.null} null\nRB: ${numberOfTournamentChannels.RB.sent} sent, ${numberOfTournamentChannels.RB.error} error, ${numberOfTournamentChannels.RB.null} null\nHB: ${numberOfTournamentChannels.AB.sent} sent, ${numberOfTournamentChannels.HB.error} error, ${numberOfTournamentChannels.HB.null} null\n`
+		await log.sendLog(this.#client, log.level.SUCCESS, textToSendLog, "Send Embed Message")
 	}
 
 	static async #sendEmbedMessageForAllGuilds(tournaments) {
