@@ -23,7 +23,8 @@
     "mitt": "^3.0.0",
     "node-fetch": "2",
     "pg": "8.9.0",
-    "puppeteer": "^19.7.0"
+    "puppeteer": "^19.7.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "eslint": "^8.33.0",
