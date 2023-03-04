@@ -75,17 +75,17 @@ class Tournament {
 
 	static async #getTournamentEveryDay() {
 		const noon = new Date();
-		noon.setHours(0, 50, 0, 0); // Set the time to noon
+		noon.setHours(12, 0, 0, 0); // Set the time to noon
 		let timeUntilNoon = noon.getTime() - Date.now(); // Calculate time until noon
 
 		// If it's already past noon, add 1 day to the time until noon
 		if (timeUntilNoon <= 0) {
-			timeUntilNoon += 24 * 60 * 60 * 1000; // 1 day in milliseconds
+			timeUntilNoon += 12 * 60 * 60 * 1000; // half a day in milliseconds
 		}
 
 		setTimeout(async () => {
 			await this.#getNewTournaments();
-			setInterval(async _ => { await this.#getNewTournaments(); }, 24 * 60 * 60 * 1000); // 1 day in milliseconds
+			setInterval(async _ => { await this.#getNewTournaments(); }, 12 * 60 * 60 * 1000); // 1 day in milliseconds
 		}, timeUntilNoon);
 	}
 
@@ -129,9 +129,10 @@ class Tournament {
 			// Log the date of each tournament
 			for (let tournament of this.#tempTournaments) {
 				const date = new Date(tournament.dateStartTournament * 1000)
-				sentTournaments.push(tournament.gameMode + ", " + date + ", " + tournament.nameEN)
+				sentTournaments.push(`${tournament.tournamentID} : ${tournament.gameMode}, ${date}, ${tournament.nameEN}`)
 			}
 			await log.sendLog(this.#client, log.level.SUCCESS, `${this.#tempTournaments.length} new tournament(s) get\n${sentTournaments.join("\n")}`, "New Tournaments")
+
 			// Send tournament to the test sever
 			await this.#sendEmbedMessageForAllChannels(this.#tempTournaments);
 		}
@@ -188,11 +189,12 @@ class Tournament {
 	}
 
 	/**
-	 *
+	 * Foreach tournament, send the embed message for each subscribe guild
 	 * @param {this.tempTournaments} tournaments
 	 * @returns {Promise<void>}
 	 */
 	static #sendEmbedMessageForAllChannels = async (tournaments) => {
+		const guildIdsToDelete = [];
 		let channels = { AB: [], RB: [], HB: [] };
 		const guildIds = this.#client.guilds.cache.map(g => g.id);
 		const tournamentSettings = await prisma.tournament_settings.findMany()
@@ -203,11 +205,34 @@ class Tournament {
 				channels.HB.push(ts.sb_channel)
 			}
 			else {
-				// TODO: Delete the value with Prisma
+				guildIdsToDelete.push(ts.guild_id)
 			}
 		});
+		// Deleting guilds not in the bot APIs data.
+		if (guildIdsToDelete.length > 0) {
+			await prisma.tournament_settings
+				.deleteMany({
+					where: {
+						guild_id: {
+							in: guildIdsToDelete,
+						}
+					}
+				})
+				.then(async () => {
+					await log.sendLog(this.#client, log.level.INFO, `${guildIdsToDelete.join("\n")}`,'PRISMA : Delete tournament guild settings')
+					await prisma.$disconnect();
+				})
+				.catch(async (e) => {
+					await log.sendLog(this.#client, log.level.ERROR, e.message, "PRISMA : Insert tournament ID")
+					await prisma.$disconnect();
+				});
+		}
+		else {
+			await log.sendLog(this.#client, log.level.INFO, 'No guild ids to delete','PRISMA : Delete tournament guild settings')
+		}
 
-		let numberOfTournamentChannels = { AB: { sent: 0, error: 0, null: 0}, RB: { sent: 0, error: 0, null: 0}, HB: { sent: 0, error: 0, null: 0} }
+		// Set up an object to log stats
+		let numberOfTournamentChannels = { AB: { tournaments: 0, guilds: channels.AB.filter(id => id !== null).length, sent: 0, error: 0}, RB: { tournaments: 0, guilds: channels.RB.filter(id => id !== null).length, sent: 0, error: 0}, HB: { tournaments: 0, guilds: channels.HB.filter(id => id !== null).length, sent: 0, error: 0} }
 
 		for (const tournament of tournaments) {
 			const embed = this.#embedMessage(tournament)
@@ -219,7 +244,6 @@ class Tournament {
 				.filter(c => channels[gameMode].includes(c.id))
 				.map(c => c.send(embed)
 					.then(async _ => {
-						this.#tournamentsIds.push(tournament.tournamentID);
 						numberOfTournamentChannels[gameMode]['sent'] += 1;
 					})
 					.catch(err => {
@@ -228,22 +252,6 @@ class Tournament {
 					})
 				))
 
-			for (const channel of channels[gameMode]) {
-				if (channel !== null) {
-					await this.#client.channels.cache.get(channel).send(embed)
-						.then(async _ => {
-							this.#tournamentsIds.push(tournament.tournamentID);
-							numberOfTournamentChannels[gameMode]['sent'] += 1;
-						})
-						.catch(err => {
-							numberOfTournamentChannels[gameMode]['error'] += 1;
-							log.sendLog(this.#client, log.level.ERROR, `Channel ID : ${channel}\n\nError Message : \n${err.message}`, "Send Embed Message In Specific Channel")
-						})
-				}
-				else {
-					numberOfTournamentChannels[gameMode]['null'] += 1;
-				}
-			}
 			// Add the tournament in the database (to not resend it the next day)
 			await prisma.tournaments
 				.create({
@@ -258,8 +266,14 @@ class Tournament {
 					await log.sendLog(this.#client, log.level.ERROR, e.message, "PRISMA : Insert tournament ID")
 					await prisma.$disconnect();
 				});
+
+			// For stats
+			numberOfTournamentChannels[gameMode]['tournaments'] += 1;
 		}
-		const textToSendLog = `AB: ${numberOfTournamentChannels.AB.sent} sent, ${numberOfTournamentChannels.AB.error} error, ${numberOfTournamentChannels.AB.null} null\nRB: ${numberOfTournamentChannels.RB.sent} sent, ${numberOfTournamentChannels.RB.error} error, ${numberOfTournamentChannels.RB.null} null\nHB: ${numberOfTournamentChannels.AB.sent} sent, ${numberOfTournamentChannels.HB.error} error, ${numberOfTournamentChannels.HB.null} null\n`
+		// TODO: It is horrible, need a fix
+		const textToSendLog = 	`AB: ${numberOfTournamentChannels.AB.tournaments} tournaments send in ${numberOfTournamentChannels.AB.guilds} guilds (Total : ${ numberOfTournamentChannels.AB.sent } sent, ${ numberOfTournamentChannels.AB.error } error)\n` +
+								`RB: ${numberOfTournamentChannels.RB.tournaments} tournaments send in ${numberOfTournamentChannels.RB.guilds} guilds (Total : ${ numberOfTournamentChannels.RB.sent } sent, ${ numberOfTournamentChannels.RB.error } error)\n` +
+								`SB: ${numberOfTournamentChannels.HB.tournaments} tournaments send in ${numberOfTournamentChannels.HB.guilds} guilds (Total : ${ numberOfTournamentChannels.HB.sent } sent, ${ numberOfTournamentChannels.HB.error } error)`
 		await log.sendLog(this.#client, log.level.SUCCESS, textToSendLog, "Send Embed Message")
 	}
 
@@ -370,7 +384,7 @@ class Tournament {
 				},
 				{
 					name: 'Type',
-					value: tournament.details.typeTournament,
+					value: tournament.details.typeTournament === 'single-elumination' ? 'single-eliminitation' : tournament.details.typeTournament,
 					inline: true,
 				},
 				{
@@ -395,13 +409,11 @@ class Tournament {
 			timestamp: new Date(tournament.dateStartTournament * 1000),
 			footer: {
 				text: 'eSport Official Discord - Gaijin',
-				icon_url: 'attachment://WT_Esports_Standard_B_1.png',
+				icon_url: 'attachment://WT_Esports_Standard.png',
 			},
 		}
 		return {
-			// files: ['./assets/esportReadyLogo.png', './assets/tournamentVehicles.png'],
-			// embed: embedMessage
-			files: ['./assets/WT_Esports_Standard_B_1.png', './assets/tournamentVehicles.png'],
+			files: ['./assets/WT_Esports_Standard.png', './assets/tournamentVehicles.png'],
 			embeds: [embedMessage],
 		}
 	}
