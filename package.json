@@ -1,19 +1,33 @@
 {
   "name": "BotCommands",
   "version": "1.0.0",
-  "description": "",
+  "description": "A discord bot to get information about the game War Thunder in discord severs and to do other stuff",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "update": "node deploy-commands.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "Discord",
+    "Bot",
+    "WarThunder"
+  ],
+  "author": "Amaury VANDEMOORTELE",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^4.10.1",
     "discord.js": "^14.7.1",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "form-data": "^4.0.0",
+    "mitt": "^3.0.0",
+    "node-fetch": "2",
+    "pg": "8.9.0",
+    "puppeteer": "^19.7.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "eslint": "^8.33.0"
+    "eslint": "^8.33.0",
+    "prisma": "^4.10.1"
   }
 }

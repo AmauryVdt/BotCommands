@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model tournament_settings {
+  id           String  @id(map: "tournament_settings_pk") @db.Uuid
+  guild_id     String  @unique(map: "tournament_settings_pk2")
+  sending_mode String?
+  ab_channel   String?
+  rb_channel   String?
+  sb_channel   String?
+}
+
+model tournaments {
+  id Int @id(map: "tournaments_pk")
+}
