@@ -21,10 +21,15 @@ module.exports = {
 			option.setName('sbchannel')
 				.setDescription('The channel to send TSS Simulator Battle Tournament')
 				.addChannelTypes(0)
-				.setRequired(false))
-		.setDefaultMemberPermissions(0),
+				.setRequired(false)),
+	// .setDefaultMemberPermissions(0),
 	async execute(interaction) {
 		const { guild, options } = interaction;
+
+		if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+			interaction.reply({ content: 'Sorry, you can\'t run this command. You need administration role.', ephemeral: true })
+			return;
+		}
 
 		const abChannel = options.getChannel('abchannel');
 		const rbChannel = options.getChannel('rbchannel');
