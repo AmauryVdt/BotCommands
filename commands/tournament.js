@@ -46,7 +46,7 @@ module.exports = {
 			.setDescription(`
 				Arcade :    ${abChannel !== null ? `<#${abChannel.id}>` : 'Disable'}\n
 				Realistic : ${rbChannel !== null ? `<#${rbChannel.id}>` : 'Disable'}\n
-				Realistic : ${sbChannel !== null ? `<#${sbChannel.id}>` : 'Disable'}\n
+				Simulator : ${sbChannel !== null ? `<#${sbChannel.id}>` : 'Disable'}\n
 			`)
 			.setColor(0x4aff00);
 

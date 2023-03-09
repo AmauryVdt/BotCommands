@@ -13,7 +13,7 @@ module.exports = {
 			.setThumbnail('attachment://WT_Esports_Standard.png')
 			.addFields(
 				{ name: 'ESPORT', value: ' ' },
-				{ name: '/tournament:', value: '\nSet up channel to receive TSS tournament.' },
+				{ name: '</tournament:10802350926953352060>', value: '\nSet up channel to receive TSS tournament.' },
 				{ name: '/feedback:', value: '\nForm to send some feedback or bug report.' },
 				{ name: 'INFO', value: ' ' },
 				{ name: '/ping:', value: '\nGet the current ping of the server and the API.' },
