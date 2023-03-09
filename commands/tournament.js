@@ -21,10 +21,15 @@ module.exports = {
 			option.setName('sbchannel')
 				.setDescription('The channel to send TSS Simulator Battle Tournament')
 				.addChannelTypes(0)
-				.setRequired(false))
-		.setDefaultMemberPermissions(0),
+				.setRequired(false)),
+	// .setDefaultMemberPermissions(0),
 	async execute(interaction) {
 		const { guild, options } = interaction;
+
+		if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+			interaction.reply({ content: 'Sorry, you can\'t run this command. You need administration role.', ephemeral: true })
+			return;
+		}
 
 		const abChannel = options.getChannel('abchannel');
 		const rbChannel = options.getChannel('rbchannel');
@@ -41,9 +46,9 @@ module.exports = {
 			.setDescription(`
 				Arcade :    ${abChannel !== null ? `<#${abChannel.id}>` : 'Disable'}\n
 				Realistic : ${rbChannel !== null ? `<#${rbChannel.id}>` : 'Disable'}\n
-				Realistic : ${sbChannel !== null ? `<#${sbChannel.id}>` : 'Disable'}\n
+				Simulator : ${sbChannel !== null ? `<#${sbChannel.id}>` : 'Disable'}\n
 			`)
-			.setColor(0x4aff00);
+			.setColor(0xffd102);
 
 		if (!interaction.guild.members.me.permissions.has(PermissionsBitField.Flags.Administrator)) {
 			return await interaction.reply({ embeds: [errEmbed], ephemeral: true });

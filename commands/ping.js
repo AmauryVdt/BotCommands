@@ -6,8 +6,8 @@ module.exports = {
 		.setDescription('Replies with Pong! And show the latency.'),
 	async execute(interaction) {
 		const responseEmbed = new EmbedBuilder()
-			.setColor('Yellow')
+			.setColor(0xffd102)
 			.setDescription(`🏓 Server latency is** ${Date.now() - interaction.createdTimestamp}ms**. API Latency is **${Math.round(interaction.client.ws.ping)}ms**`);
-		await interaction.reply({ embeds: [responseEmbed] });
+		await interaction.reply({ embeds: [responseEmbed], ephemeral: true });
 	},
 };

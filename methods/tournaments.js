@@ -384,7 +384,7 @@ class Tournament {
 				},
 				{
 					name: 'Type',
-					value: tournament.details.typeTournament === 'single-elumination' ? 'single-eliminitation' : tournament.details.typeTournament,
+					value: tournament.details.typeTournament === 'single-elumination' ? 'single-elimination' : tournament.details.typeTournament,
 					inline: true,
 				},
 				{

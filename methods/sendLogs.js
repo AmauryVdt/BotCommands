@@ -39,7 +39,7 @@ class SendLog {
 		await client.channels.cache.get(process.env.LOG_CHANNEL_ID).send(logToSend).catch(e => console.error(e))
 
 		// // Send to the developer
-		// await client.users.cache.find(user => user.id === process.env.DEVELOPER_ID)
+		// await client.users.cache.find(user => user.id === process..env.DEVELOPER_ID)
 		// 	.createDM()
 		// 	.then(DMChannel => DMChannel.send(logToSend))
 		// 	.catch(err => {console.log(err.message)})
