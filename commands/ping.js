@@ -8,6 +8,6 @@ module.exports = {
 		const responseEmbed = new EmbedBuilder()
 			.setColor('Yellow')
 			.setDescription(`🏓 Server latency is** ${Date.now() - interaction.createdTimestamp}ms**. API Latency is **${Math.round(interaction.client.ws.ping)}ms**`);
-		await interaction.reply({ embeds: [responseEmbed] });
+		await interaction.reply({ embeds: [responseEmbed], ephemeral: true });
 	},
 };
