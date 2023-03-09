@@ -48,7 +48,7 @@ module.exports = {
 				Realistic : ${rbChannel !== null ? `<#${rbChannel.id}>` : 'Disable'}\n
 				Simulator : ${sbChannel !== null ? `<#${sbChannel.id}>` : 'Disable'}\n
 			`)
-			.setColor(0x4aff00);
+			.setColor(0xffd102);
 
 		if (!interaction.guild.members.me.permissions.has(PermissionsBitField.Flags.Administrator)) {
 			return await interaction.reply({ embeds: [errEmbed], ephemeral: true });
