@@ -3,7 +3,7 @@ const { SlashCommandBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder, T
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('feedback')
-		.setDescription('Send your feedback or bug report.'),
+		.setDescription('Send your feedback or bug report to the team. We keep your pseudo to come back to you.'),
 	async execute(interaction) {
 		const modal = new ModalBuilder()
 			.setCustomId('modalFeedback')
